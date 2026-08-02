@@ -1,0 +1,46 @@
+[
+  {
+    "title": "Dune",
+    "author": "Herbert",
+    "pages": 412,
+    "year": 1965,
+    "read": true,
+    "rating": 5
+  },
+  {
+    "title": "The Dispossessed",
+    "author": "Le Guin",
+    "pages": 341,
+    "year": 1974,
+    "read": true,
+    "rating": 5
+  },
+  {
+    "title": "Neuromancer",
+    "author": "Gibson",
+    "pages": 271,
+    "year": 1984,
+    "read": false,
+    "rating": null
+  },
+  {
+    "title": "Blindsight",
+    "author": "Watts",
+    "pages": 384,
+    "year": 2006,
+    "read": true,
+    "rating": 4
+  },
+  {
+    "title": "Piranesi",
+    "author": "Clarke",
+    "pages": 245,
+    "year": 2020,
+    "read": false,
+    "rating": null
+  }
+]
+{
+  "author": "John",
+  "pages": 24
+}
