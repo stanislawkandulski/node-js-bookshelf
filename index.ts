@@ -1,5 +1,4 @@
-import fs from "node:fs";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 
 interface Book {
   title: string;
@@ -40,7 +39,7 @@ async function main() {
 const args = process.argv.slice(2);
 if (args.includes("--addBook")) {
   try {
-    const newBookEntry: Book = {
+    const defaultBookEntry: Book = {
       title: "Untitled",
       author: "Unassigned",
       pages: 0,
@@ -48,6 +47,8 @@ if (args.includes("--addBook")) {
       read: false,
       rating: null,
     };
+    const newBookEntry: Partial<Book> = {};
+
     args.forEach((value, index) => {
       switch (value) {
         case "--title":
@@ -73,17 +74,11 @@ if (args.includes("--addBook")) {
           break;
       }
     });
-
+    const finalBookEntry: Book = { ...defaultBookEntry, ...newBookEntry };
     const existingRaw = await loadFile("books.json");
-    const existingBooks = await parseData(existingRaw)
-    existingBooks.push(newBookEntry);
-    fs.writeFile(
-      "books.json",
-      JSON.stringify(existingBooks, null, 2),
-      (err) => {
-        if (err) console.error(err);
-      },
-    );
+    const existingBooks = await parseData(existingRaw);
+    existingBooks.push(finalBookEntry);
+    await writeFile("books.json", JSON.stringify(existingBooks, null, 2));
 
     console.log(newBookEntry);
   } catch (error) {

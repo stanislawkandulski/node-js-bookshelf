@@ -38,9 +38,13 @@
     "year": 2020,
     "read": false,
     "rating": null
+  },
+  {
+    "title": "Untitled",
+    "author": "John",
+    "pages": 24,
+    "year": 0,
+    "read": false,
+    "rating": null
   }
 ]
-{
-  "author": "John",
-  "pages": 24
-}
