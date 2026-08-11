@@ -1,5 +1,6 @@
 [
   {
+    "id": 1,
     "title": "Dune",
     "author": "Herbert",
     "pages": 412,
@@ -8,6 +9,7 @@
     "rating": 5
   },
   {
+    "id": 2,
     "title": "The Dispossessed",
     "author": "Le Guin",
     "pages": 341,
@@ -16,6 +18,7 @@
     "rating": 5
   },
   {
+    "id": 3,
     "title": "Neuromancer",
     "author": "Gibson",
     "pages": 271,
@@ -24,6 +27,7 @@
     "rating": null
   },
   {
+    "id": 4,
     "title": "Blindsight",
     "author": "Watts",
     "pages": 384,
@@ -32,18 +36,11 @@
     "rating": 4
   },
   {
+    "id": 5,
     "title": "Piranesi",
     "author": "Clarke",
     "pages": 245,
     "year": 2020,
-    "read": false,
-    "rating": null
-  },
-  {
-    "title": "Untitled",
-    "author": "John",
-    "pages": 24,
-    "year": 0,
     "read": false,
     "rating": null
   }
