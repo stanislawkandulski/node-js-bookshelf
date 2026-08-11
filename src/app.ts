@@ -1,5 +1,8 @@
-import express  from "express";
+import express from "express";
+import booksRouter from "./books/books.routes.ts";
 
-const app = express()
+const app = express();
 
-export default app
+app.use("/books", booksRouter);
+
+export default app;

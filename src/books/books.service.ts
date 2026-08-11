@@ -11,3 +11,15 @@ export function totalPages(books: Book[]) {
 export function sortByPages(parsedBooks: Book[]) {
   return parsedBooks.toSorted((bookA, bookB) => bookA.pages - bookB.pages);
 }
+
+export function findBookById(
+  parsedBooks: Book[],
+  id: number,
+): Book | undefined {
+  const returnedBook = parsedBooks.find((element) => element.id === id);
+  if (returnedBook === undefined) {
+    return undefined;
+  } else {
+    return returnedBook;
+  }
+}
