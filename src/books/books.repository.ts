@@ -1,4 +1,5 @@
 import { readFile, writeFile } from "node:fs/promises";
+import { config } from "../config.ts";
 import type { Book } from "./types.ts";
 
 async function loadFile(path: string, encoding: BufferEncoding = "utf-8") {
@@ -23,11 +24,11 @@ function parseData(raw: string): Book[] {
 }
 
 export async function loadBooks() {
-  const raw = await loadFile("books.json");
+  const raw = await loadFile(config.dataFile);
   const parsedBooks = parseData(raw);
   return parsedBooks;
 }
 
 export async function saveBooks(books: Book[]) {
-  await writeFile("books.json", JSON.stringify(books, null, 2));
+  await writeFile(config.dataFile, JSON.stringify(books, null, 2));
 }
