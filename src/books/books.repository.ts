@@ -1,5 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { config } from "../config.ts";
+import { StorageError } from "../errors.ts";
 import type { Book } from "./types.ts";
 
 async function loadFile(path: string, encoding: BufferEncoding = "utf-8") {
@@ -7,9 +8,12 @@ async function loadFile(path: string, encoding: BufferEncoding = "utf-8") {
     return await readFile(path, encoding);
   } catch (error) {
     if (error instanceof Error && "code" in error) {
-      if (error.code === "ENOENT") throw new Error("No such file");
+      if (error.code === "ENOENT")
+        throw new StorageError(`No such file: ${path}`, { cause: error });
       if (error.code === "EACCES")
-        throw new Error("No permission to read path");
+        throw new StorageError(`No permission to read: ${path}`, {
+          cause: error,
+        });
     }
     throw error;
   }
@@ -19,16 +23,21 @@ function parseData(raw: string): Book[] {
   try {
     return JSON.parse(raw) as Book[];
   } catch (error) {
-    throw new Error("Malformed JSON", { cause: error });
+    throw new StorageError("Malformed JSON", { cause: error });
   }
 }
 
 export async function loadBooks() {
   const raw = await loadFile(config.dataFile);
-  const parsedBooks = parseData(raw);
-  return parsedBooks;
+  return parseData(raw);
 }
 
 export async function saveBooks(books: Book[]) {
-  await writeFile(config.dataFile, JSON.stringify(books, null, 2));
+  try {
+    await writeFile(config.dataFile, JSON.stringify(books, null, 2));
+  } catch (error) {
+    throw new StorageError(`Failed to write: ${config.dataFile}`, {
+      cause: error,
+    });
+  }
 }
