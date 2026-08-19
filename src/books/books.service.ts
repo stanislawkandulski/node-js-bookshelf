@@ -52,6 +52,15 @@ export function filterByRead(books: Book[], read: boolean) {
   return books.filter((book) => book.read === read);
 }
 
+export function filterBooks(books: Book[], phrase: string) {
+  const searchedPhrase = phrase.toLowerCase();
+  return books.filter(
+    (book) =>
+      book.author.toLowerCase().includes(searchedPhrase) ||
+      book.title.toLowerCase().includes(searchedPhrase),
+  );
+}
+
 export function totalPages(books: Book[]) {
   return books.reduce((acc, book) => acc + book.pages, 0);
 }
@@ -156,4 +165,19 @@ export function parseBookPatch(input: unknown): Partial<NewBook> {
 
 export function applyPatch(book: Book, patch: Partial<NewBook>): Book {
   return { ...book, ...patch };
+}
+
+export function parsedQueryToBoolean(value: unknown): boolean | undefined {
+  if (value === "undefined") return undefined;
+  if (value === "true") return true;
+  if (value === "false") return false;
+
+  throw new ValidationError("Read must be true of false");
+}
+
+export function parsedQueryToString(value: unknown): string | undefined {
+  if (typeof value === "string") return value;
+  if (typeof value === undefined) return undefined;
+
+  throw new ValidationError("query parameter must be a single string value");
 }

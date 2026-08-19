@@ -4,9 +4,13 @@ import { NotFoundError } from "../errors.ts";
 import { loadBooks, saveBooks } from "./books.repository.ts";
 import {
   applyPatch,
+  filterBooks,
+  filterByRead,
   findBookById,
   findBooksIndexById,
   parseBookPatch,
+  parsedQueryToBoolean,
+  parsedQueryToString,
   parseToNewBook,
 } from "./books.service.ts";
 import type { Book } from "./types.ts";
@@ -27,6 +31,37 @@ booksRouter.get("/:id", async (req, res) => {
   } else {
     res.json(searchedBook);
   }
+});
+
+booksRouter.get("/", async (req, res) => {
+  const loadedBooks = await loadBooks();
+  const readValue = parsedQueryToBoolean(req.query["read"]);
+  const searchValue = parsedQueryToString(req.query["search"]);
+  const authorValue = parsedQueryToString(req.query["author"]);
+
+  let returnedBooks = await loadBooks();
+
+  if (readValue !== undefined) {
+    return filterByRead(returnedBooks, readValue);
+  }
+  if (searchValue !== undefined) {
+    return filterBooks(returnedBooks, searchValue);
+  }
+  if (authorValue !== undefined) {
+    return filterBooks(returnedBooks, authorValue);
+  }
+
+  res.json(returnedBooks);
+});
+
+booksRouter.get("/", async (req, res) => {
+  const loadedBooks = await loadBooks();
+  const readValue = parsedQueryToString(req.query["phrase"]);
+
+  const result =
+    readValue === undefined ? loadedBooks : filterBooks(loadedBooks, readValue);
+
+  res.json(result);
 });
 
 booksRouter.delete("/:id", async (req, res) => {
