@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { loadBooks } from "../books/books.repository.ts";
 import { sortByPages } from "../books/books.service.ts";
-import type { Book } from "../books/types.ts";
+import type { Book } from "../books/books.schema.ts";
 
 describe("sortByPages", () => {
   const testArray: Book[] = [

@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import { config } from "../config.ts";
 import { StorageError } from "../errors.ts";
-import type { Book } from "./types.ts";
+import type { Book } from "./books.schema.ts";
 
 async function loadFile(path: string, encoding: BufferEncoding = "utf-8") {
   try {

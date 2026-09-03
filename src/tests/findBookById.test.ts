@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { findBookById } from "../books/books.service.ts";
-import type { Book } from "../books/types.ts";
+import type { Book } from "../books/books.schema.ts";
 
 describe("findBookById", () => {
   const testArray: Book[] = [

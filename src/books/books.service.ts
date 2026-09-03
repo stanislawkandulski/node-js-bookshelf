@@ -1,51 +1,30 @@
-import { ValidationError } from "../errors.ts";
-import type { Book } from "./types.ts";
+import * as z from "zod";
 
-export type NewBook = Omit<Book, "id">;
+import { ValidationError } from "../errors.ts";
+import {
+  bookPatchSchema,
+  newBookSchema,
+  type Book,
+  type BookPatch,
+  type NewBook,
+} from "./books.schema.ts";
+
+function parseWithSchema<T>(schema: z.ZodType<T>, input: unknown): T {
+  try {
+    return schema.parse(input);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const message = error.issues
+        .map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`)
+        .join("; ");
+      throw new ValidationError(message);
+    }
+    throw error;
+  }
+}
 
 export function parseToNewBook(input: unknown): NewBook {
-  const errors: string[] = [];
-
-  if (typeof input !== "object" || input === null) {
-    throw new ValidationError("Request body must be an object");
-  }
-
-  const { title, author, pages, year, read, rating } = input as Record<
-    string,
-    unknown
-  >;
-
-  if (typeof title !== "string" || title.trim() === "") {
-    errors.push("title must be a non-empty string");
-  }
-  if (typeof author !== "string" || author.trim() === "") {
-    errors.push("author must be a non-empty string");
-  }
-  if (typeof pages !== "number" || !Number.isInteger(pages) || pages <= 0) {
-    errors.push("pages must be a positive integer");
-  }
-  if (typeof year !== "number" || !Number.isInteger(year)) {
-    errors.push("year must be an integer");
-  }
-  if (read !== undefined && typeof read !== "boolean") {
-    errors.push("read must be a boolean");
-  }
-  if (rating !== null && rating !== undefined && typeof rating !== "number") {
-    errors.push("rating must be a number or null");
-  }
-
-  if (errors.length > 0) {
-    throw new ValidationError(errors.join("; "));
-  }
-
-  return {
-    title: title as string,
-    author: author as string,
-    pages: pages as number,
-    year: year as number,
-    read: (read as boolean) ?? false,
-    rating: (rating as number | null) ?? null,
-  };
+  return parseWithSchema(newBookSchema, input);
 }
 
 export function filterByRead(books: Book[], read: boolean) {
@@ -90,94 +69,35 @@ export function findBooksIndexById(
   return booksIndex === -1 ? undefined : booksIndex;
 }
 
-export function parseBookPatch(input: unknown): Partial<NewBook> {
-  const errors: string[] = [];
-
-  if (typeof input !== "object" || input === null) {
-    throw new ValidationError("Request body must be an object");
-  }
-
-  const { title, author, pages, year, read, rating } = input as Record<
-    string,
-    unknown
-  >;
-
-  const patch: Partial<NewBook> = {};
-
-  if (title !== undefined) {
-    if (typeof title !== "string" || title.trim() === "") {
-      errors.push("title must be a non-empty string");
-    } else {
-      patch.title = title;
-    }
-  }
-
-  if (author !== undefined) {
-    if (typeof author !== "string" || author.trim() === "") {
-      errors.push("author must be a non-empty string");
-    } else {
-      patch.author = author;
-    }
-  }
-
-  if (pages !== undefined) {
-    if (typeof pages !== "number" || !Number.isInteger(pages) || pages <= 0) {
-      errors.push("pages must be a positive integer");
-    } else {
-      patch.pages = pages;
-    }
-  }
-
-  if (year !== undefined) {
-    if (typeof year !== "number" || !Number.isInteger(year)) {
-      errors.push("year must be an integer");
-    } else {
-      patch.year = year;
-    }
-  }
-
-  if (read !== undefined) {
-    if (typeof read !== "boolean") {
-      errors.push("read must be a boolean");
-    } else {
-      patch.read = read;
-    }
-  }
-
-  if (rating !== undefined) {
-    if (rating !== null && typeof rating !== "number") {
-      errors.push("rating must be a number or null");
-    } else {
-      patch.rating = rating;
-    }
-  }
-
-  if (errors.length > 0) {
-    throw new ValidationError(errors.join("; "));
-  }
-
+export function parseBookPatch(input: unknown): BookPatch {
+  const patch = parseWithSchema(bookPatchSchema, input);
   if (Object.keys(patch).length === 0) {
     throw new ValidationError("No valid fields provided to update");
   }
-
   return patch;
 }
 
-export function applyPatch(book: Book, patch: Partial<NewBook>): Book {
+export function applyPatch(book: Book, patch: BookPatch): Book {
   return { ...book, ...patch };
 }
 
 export function parsedQueryToBoolean(value: unknown): boolean | undefined {
-  if (value === "undefined") return undefined;
+  if (value === undefined) return undefined;
   if (value === "true") return true;
   if (value === "false") return false;
 
-  throw new ValidationError("Read must be true of false");
+  throw new ValidationError("read must be 'true' or 'false'");
 }
 
 export function parsedQueryToString(value: unknown): string | undefined {
+  if (value === undefined) return undefined;
   if (typeof value === "string") return value;
-  if (typeof value === undefined) return undefined;
 
   throw new ValidationError("query parameter must be a single string value");
+}
+
+export function filterByAuthor(books: Book[], author: string) {
+  return books.filter(
+    (book) => book.author.toLowerCase() === author.toLowerCase(),
+  );
 }
