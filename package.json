@@ -6,7 +6,10 @@
   "main": "index.js",
   "scripts": {
     "test": "vitest",
-    "dev": "node --env-file=.env --watch src/index.ts"
+    "dev": "node --env-file=.env --watch src/index.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc",
+    "check": "npm run lint && npm run typecheck"
   },
   "keywords": [],
   "author": "",
@@ -18,6 +21,7 @@
   },
   "dependencies": {
     "fastify": "^5.12.1",
+    "yarn": "^1.22.22",
     "zod": "^4.4.3"
   }
 }
