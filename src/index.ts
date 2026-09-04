@@ -1,6 +1,6 @@
-import app from "./app.ts";
+import { buildApp } from "./app.ts";
 import { config } from "./config.ts";
 
-app.listen(config.port, () => {
-  console.log(`http://localhost:${config.port}`);
-});
+const app = buildApp();
+await app.listen({ port: config.port });
+console.log(`http://localhost:${config.port}`);

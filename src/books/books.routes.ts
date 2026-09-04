@@ -1,5 +1,4 @@
-import { Router } from "express";
-
+import { type FastifyInstance } from "fastify";
 import { NotFoundError } from "../errors.ts";
 import { loadBooks, saveBooks } from "./books.repository.ts";
 import type { Book } from "./books.schema.ts";
@@ -16,107 +15,109 @@ import {
   parseToNewBook,
 } from "./books.service.ts";
 
-const booksRouter = Router();
+export async function booksRoutes(fastify: FastifyInstance) {
+  fastify.get<{ Querystring: Record<string, unknown> }>(
+    "/",
+    async (request, reply) => {
+      const readValue = parsedQueryToBoolean(request.query["read"]);
+      const searchValue = parsedQueryToString(request.query["search"]);
+      const authorValue = parsedQueryToString(request.query["author"]);
 
-booksRouter.get("/", async (req, res) => {
-  const readValue = parsedQueryToBoolean(req.query["read"]);
-  const searchValue = parsedQueryToString(req.query["search"]);
-  const authorValue = parsedQueryToString(req.query["author"]);
+      let returnedBooks = await loadBooks();
 
-  let returnedBooks = await loadBooks();
+      if (readValue !== undefined) {
+        returnedBooks = filterByRead(returnedBooks, readValue);
+      }
+      if (authorValue !== undefined) {
+        returnedBooks = filterByAuthor(returnedBooks, authorValue);
+      }
+      if (searchValue !== undefined) {
+        returnedBooks = filterBooks(returnedBooks, searchValue);
+      }
 
-  if (readValue !== undefined) {
-    returnedBooks = filterByRead(returnedBooks, readValue);
-  }
-  if (authorValue !== undefined) {
-    returnedBooks = filterByAuthor(returnedBooks, authorValue);
-  }
-  if (searchValue !== undefined) {
-    returnedBooks = filterBooks(returnedBooks, searchValue);
-  }
+      return returnedBooks;
+    },
+  );
 
-  res.json(returnedBooks);
-});
+  fastify.get<{ Params: { id: string } }>("/:id", async (request) => {
+    const loadedBooks = await loadBooks();
+    const bookId = Number(request.params["id"]);
+    const searchedBook = findBookById(loadedBooks, bookId);
 
-booksRouter.get("/:id", async (req, res) => {
-  const loadedBooks = await loadBooks();
-  const bookId = Number(req.params["id"]);
-  const searchedBook = findBookById(loadedBooks, bookId);
+    if (searchedBook === undefined) {
+      throw new NotFoundError(`No book with id ${bookId}`);
+    }
 
-  if (searchedBook === undefined) {
-    throw new NotFoundError(`No book with id ${bookId}`);
-  }
-
-  res.json(searchedBook);
-});
-
-booksRouter.post("/", async (req, res) => {
-  const newBook = parseToNewBook(req.body);
-  const loadedBooks = await loadBooks();
-
-  const allIds: number[] = [];
-  loadedBooks.forEach((book) => {
-    allIds.push(book.id);
+    return searchedBook;
   });
-  const highestId = allIds.toSorted((bookA, bookB) => bookA - bookB).at(-1);
-  const nextId = highestId === undefined ? 1 : highestId + 1;
 
-  const book: Book = { id: nextId, ...newBook };
+  fastify.post<{ Body: unknown }>("/", async (request, reply) => {
+    const newBook = parseToNewBook(request.body);
+    const loadedBooks = await loadBooks();
 
-  loadedBooks.push(book);
-  await saveBooks(loadedBooks);
+    const allIds: number[] = [];
+    loadedBooks.forEach((book) => {
+      allIds.push(book.id);
+    });
+    const highestId = allIds.toSorted((bookA, bookB) => bookA - bookB).at(-1);
+    const nextId = highestId === undefined ? 1 : highestId + 1;
 
-  res.status(201).json(book);
-});
+    const book: Book = { id: nextId, ...newBook };
 
-booksRouter.patch("/:id", async (req, res) => {
-  const bookId = Number(req.params["id"]);
-  const patch = parseBookPatch(req.body);
+    loadedBooks.push(book);
+    await saveBooks(loadedBooks);
 
-  const loadedBooks = await loadBooks();
-  const index = findBooksIndexById(loadedBooks, bookId);
+    reply.code(201);
+    return book;
+  });
 
-  if (index === undefined) {
-    throw new NotFoundError(`No book with id ${bookId}`);
-  }
+  fastify.patch<{ Params: { id: string } }>("/:id", async (request) => {
+    const bookId = Number(request.params["id"]);
+    const patch = parseBookPatch(request.body);
 
-  const updated = applyPatch(loadedBooks[index]!, patch);
-  loadedBooks[index] = updated;
+    const loadedBooks = await loadBooks();
+    const index = findBooksIndexById(loadedBooks, bookId);
 
-  await saveBooks(loadedBooks);
-  res.json(updated);
-});
+    if (index === undefined) {
+      throw new NotFoundError(`No book with id ${bookId}`);
+    }
 
-booksRouter.put("/:id", async (req, res) => {
-  const bookId = Number(req.params["id"]);
-  const replacement = parseToNewBook(req.body);
+    const updated = applyPatch(loadedBooks[index]!, patch);
+    loadedBooks[index] = updated;
 
-  const loadedBooks = await loadBooks();
-  const index = findBooksIndexById(loadedBooks, bookId);
+    await saveBooks(loadedBooks);
+    return updated;
+  });
 
-  if (index === undefined) {
-    throw new NotFoundError(`No book with id ${bookId}`);
-  }
+  fastify.put<{ Params: { id: string } }>("/:id", async (request) => {
+    const bookId = Number(request.params["id"]);
+    const replacement = parseToNewBook(request.body);
 
-  const updated: Book = { id: bookId, ...replacement };
-  loadedBooks[index] = updated;
+    const loadedBooks = await loadBooks();
+    const index = findBooksIndexById(loadedBooks, bookId);
 
-  await saveBooks(loadedBooks);
-  res.json(updated);
-});
+    if (index === undefined) {
+      throw new NotFoundError(`No book with id ${bookId}`);
+    }
 
-booksRouter.delete("/:id", async (req, res) => {
-  const loadedBooks = await loadBooks();
-  const bookId = Number(req.params["id"]);
-  const index = findBooksIndexById(loadedBooks, bookId);
+    const updated: Book = { id: bookId, ...replacement };
+    loadedBooks[index] = updated;
 
-  if (index === undefined) {
-    throw new NotFoundError(`No book with id ${bookId}`);
-  }
+    await saveBooks(loadedBooks);
+    return updated;
+  });
 
-  loadedBooks.splice(index, 1);
-  await saveBooks(loadedBooks);
-  res.status(204).send();
-});
+  fastify.delete<{ Params: { id: string } }>("/:id", async (request, reply) => {
+    const loadedBooks = await loadBooks();
+    const bookId = Number(request.params["id"]);
+    const index = findBooksIndexById(loadedBooks, bookId);
 
-export default booksRouter;
+    if (index === undefined) {
+      throw new NotFoundError(`No book with id ${bookId}`);
+    }
+
+    loadedBooks.splice(index, 1);
+    await saveBooks(loadedBooks);
+    reply.code(204);
+  });
+}
